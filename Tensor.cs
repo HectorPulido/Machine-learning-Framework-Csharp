@@ -38,25 +38,25 @@ namespace DLFramework
             this.arguments = arguments;
 
             //Unique id
-            this.id = idCount;
+            id = idCount;
             idCount++;
 
             //Child and parents
             this.creators = creators;
             this.creationOperation = creationOperation;
-            this.childrens = new Dictionary<int, int>();
+            childrens = new Dictionary<int, int>();
 
             if (this.creators != null)
             {
                 foreach (var creator in this.creators)
                 {
-                    if (creator.Childrens.ContainsKey(this.id))
+                    if (creator.Childrens.ContainsKey(id))
                     {
-                        creator.Childrens[this.id] += 1;
+                        creator.Childrens[id] += 1;
                     }
                     else
                     {
-                        creator.Childrens.Add(this.id, 1);
+                        creator.Childrens.Add(id, 1);
                     }
                 }
             }
@@ -64,7 +64,7 @@ namespace DLFramework
 
         private bool allChildrenGradsAccountedFor()
         {
-            foreach (var child in this.childrens)
+            foreach (var child in childrens)
             {
                 if (child.Value != 0)
                 {
@@ -76,7 +76,7 @@ namespace DLFramework
 
         public void Backward(Tensor gradient, Tensor gradientOrigin = null)
         {
-            if (!this.autoGrad)
+            if (!autoGrad)
             {
                 //                throw new ArgumentException($"This tensor is not set as autograd");
                 return;
@@ -84,30 +84,40 @@ namespace DLFramework
 
             if (gradient == null)
             {
-                gradient = new Tensor(Matrix.Ones(this.data.X, this.data.Y));
+                gradient = new Tensor(Matrix.Ones(data.X, data.Y));
             }
 
             if (gradientOrigin != null)
             {
-                if (this.childrens[gradientOrigin.Id] == 0)
+                if (childrens[gradientOrigin.Id] == 0)
                 {
                     throw new ArgumentException($"Cannot backprop more than once");
                 }
-                this.childrens[gradientOrigin.Id] -= 1;
+                childrens[gradientOrigin.Id] -= 1;
             }
 
-            if (this.gradient == null)
+            if (gradient == null)
             {
-                this.gradient = gradient;
+                gradient = gradient;
             }
             else
             {
-                this.gradient = Tensor.Add(this.gradient, gradient);
+                gradient = Tensor.Add(gradient, gradient);
             }
 
-            if (this.creators != null && (this.allChildrenGradsAccountedFor() || gradientOrigin == null))
+            if (data.X != gradient.data.X || data.Y != gradient.data.Y)
             {
-                switch (this.creationOperation)
+                Console.WriteLine("=====================================");
+                Console.WriteLine($"this id: {this.id}");
+                Console.WriteLine($"Shape data: {this.data.Size}");
+                Console.WriteLine($"Shape gradient: {this.gradient.data.Size}");
+                Console.WriteLine($"Operation: {this.creationOperation}");
+                Console.WriteLine("=====================================");
+            }
+
+            if (creators != null && (allChildrenGradsAccountedFor() || gradientOrigin == null))
+            {
+                switch (creationOperation)
                 {
                     case TensorOperations.None:
                         //Do nothing
@@ -137,7 +147,7 @@ namespace DLFramework
                         ExpandTensorOperation();
                         break;
                     default:
-                        throw new ArgumentException($"Invalid Creation operation: {this.creationOperation}");
+                        throw new ArgumentException($"Invalid Creation operation: {creationOperation}");
                 }
             }
         }
@@ -199,13 +209,17 @@ namespace DLFramework
 
             if (dimension == AxisZero.horizontal)
             {
-                copies = (int)Creators[0].data.X;
+                copies = (int)Creators[0].data.Y;
             }
             else
             {
-                copies = (int)Creators[0].data.Y;
+                copies = (int)Creators[0].data.X;
             }
 
+            Console.WriteLine(Creators[0].data.Size);
+
+            Console.WriteLine("=====================================");
+            Console.WriteLine(gradient);
             Creators[0].Backward(Tensor.Expand(gradient, dimension, copies));
 
         }
@@ -214,6 +228,7 @@ namespace DLFramework
         {
             var newGrad = Tensor.MatMul(gradient, Tensor.Transp(Creators[1]));
             Creators[0].Backward(newGrad);
+
             var newGrad2 = Tensor.Transp(Tensor.MatMul(Tensor.Transp(gradient), Creators[0]));
             Creators[1].Backward(newGrad);
         }
@@ -221,36 +236,36 @@ namespace DLFramework
         private void TransposeTensorOperation()
         {
             CheckCreatorsThrow(1);
-            Creators[0].Backward(Tensor.Transp(this.gradient));
+            Creators[0].Backward(Tensor.Transp(gradient));
         }
 
         private void MultiplicationTensorOperation()
         {
             CheckCreatorsThrow(2);
-            var newGrad = Tensor.Mul(this.gradient, Creators[1]);
+            var newGrad = Tensor.Mul(gradient, Creators[1]);
             Creators[0].Backward(newGrad, this);
-            var newGrad2 = Tensor.Mul(this.gradient, Creators[0]);
+            var newGrad2 = Tensor.Mul(gradient, Creators[0]);
             Creators[1].Backward(newGrad2, this);
         }
 
         private void SubstractionTensorOperation()
         {
             CheckCreatorsThrow(2);
-            Creators[0].Backward(this.gradient, this);
-            Creators[1].Backward(Tensor.Neg(this.gradient), this);
+            Creators[0].Backward(gradient, this);
+            Creators[1].Backward(Tensor.Neg(gradient), this);
         }
 
         private void NegationTensorOperation()
         {
             CheckCreatorsThrow(1);
-            Creators[0].Backward(Tensor.Neg(this.gradient), this);
+            Creators[0].Backward(Tensor.Neg(gradient), this);
         }
 
         private void AdditionTensorOperation()
         {
             CheckCreatorsThrow(2);
-            Creators[0].Backward(this.gradient, this);
-            Creators[1].Backward(this.gradient, this);
+            Creators[0].Backward(gradient, this);
+            Creators[1].Backward(gradient, this);
         }
 
         private void ExpandTensorOperation()
@@ -281,7 +296,8 @@ namespace DLFramework
                     m[i, j] = A.data[0, j];
                 }, copies, A.data.Y);
             }
-
+            Console.WriteLine(m);
+            Console.WriteLine("=====================================");
             if (A.AutoGrad)
             {
                 var Creators = new List<Tensor>() { A };
@@ -341,8 +357,6 @@ namespace DLFramework
 
         public static Tensor Mul(Tensor A, Tensor B)
         {
-                        Console.WriteLine("A" + A);
-            Console.WriteLine("B" + B);
             if (A.AutoGrad && B.AutoGrad)
             {
                 var Creators = new List<Tensor>() { A, B };

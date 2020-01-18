@@ -25,7 +25,9 @@ class MainClass
         for (var i = 0; i < 10; i++)
         {
             var pred = Tensor.MatMul(Tensor.MatMul(data, weights[0]), weights[1]);
-            var loss = Tensor.Sum(Tensor.Mul(Tensor.Sub(pred, target), Tensor.Sub(pred, target)), AxisZero.horizontal);
+
+            var diff = Tensor.Sub(pred, target);
+            var loss = Tensor.Sum(Tensor.Mul(diff, diff), AxisZero.vertical);
 
             loss.Backward(new Tensor(Matrix.Ones(loss.Data.X, loss.Data.Y)));
 
@@ -35,15 +37,16 @@ class MainClass
                 Console.WriteLine($"Shape weight gradient {weight.Gradient.Data.Size}");
 
 
-                weight.Data = (weight.Data - weight.Gradient.Data) * 0.1f;
-                weight.Gradient.Data = weight.Gradient.Data * 0f;
+                weight.Data -= (weight.Gradient.Data * 0.1f);
+                weight.Gradient.Data *= 0f;
             }
 
             Console.WriteLine($"Loss: {loss}");
         }
     }
 
-    static void TestExpand(){
+    static void TestExpand()
+    {
         var data = new Tensor((Matrix)new double[,] { { 1 } });
         Console.WriteLine($"Shape weight {Tensor.Expand(data, AxisZero.horizontal, 4).Data}");
     }
