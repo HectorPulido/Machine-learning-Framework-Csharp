@@ -12,12 +12,8 @@ namespace DLFramework.Layers {
             parameters.Add (bias);
         }
         public override Tensor Forward (Tensor input) {
-            //out = (weights x input) + bias.expanded
+            //out = (input x weights) + bias.expanded
             var bias = Tensor.Expand (parameters[1], AxisZero.vertical, input.Data.X);
-            //System.Console.WriteLine (Tensor.MatMul (input, parameters[0]).Data.Size);
-            System.Console.WriteLine (bias.Data.Size);
-            System.Console.WriteLine (input.Data.Size);
-            System.Console.WriteLine (parameters[0].Data.Size);
             return Tensor.Add (Tensor.MatMul (input, parameters[0]), bias);
         }
     }
