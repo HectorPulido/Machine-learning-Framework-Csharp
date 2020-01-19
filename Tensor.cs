@@ -184,12 +184,10 @@ namespace DLFramework {
         }
 
         private void MatrixMultiplicationTensorOperation () {
-            var c0 = Creators[0];
-            var c1 = Creators[1];
-            var new1 = Tensor.MatMul (gradient, Tensor.Transp (c1));
-            c0.Backward (new1);
-            var new2 = Tensor.Transp (Tensor.MatMul (Tensor.Transp (gradient), c0));
-            c1.Backward (new2);
+            // Grad_C0 = gradient x C1.T
+            Creators[0].Backward (Tensor.MatMul (gradient, Tensor.Transp (Creators[1])));
+            // Grad_C1 = (gradient.T x C0).T
+            Creators[1].Backward (Tensor.Transp (Tensor.MatMul (Tensor.Transp (gradient), Creators[0])));
         }
 
         private void TransposeTensorOperation () {
@@ -199,15 +197,17 @@ namespace DLFramework {
 
         private void MultiplicationTensorOperation () {
             CheckCreatorsThrow (2);
-            var newGrad = Tensor.Mul (gradient, Creators[1]);
-            Creators[0].Backward (newGrad, this);
-            var newGrad2 = Tensor.Mul (gradient, Creators[0]);
-            Creators[1].Backward (newGrad2, this);
+            // Grad_C0 = gradient . C1
+            Creators[0].Backward (Tensor.Mul (gradient, Creators[1]), this);
+            // Grad_C1 = gradient . C0
+            Creators[1].Backward (Tensor.Mul (gradient, Creators[0]), this);
         }
 
         private void SubstractionTensorOperation () {
             CheckCreatorsThrow (2);
+            // Grad_C0 = gradient
             Creators[0].Backward (gradient, this);
+            // Grad_C1 = -gradient
             Creators[1].Backward (Tensor.Neg (gradient), this);
         }
 
