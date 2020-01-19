@@ -3,39 +3,7 @@ using System.Collections.Generic;
 using DLFramework;
 using LinearAlgebra;
 
-class MainClass {
-    public static void Main (string[] args) {
-        //TestExpand();
-        TestNN ();
-    }
-
-    static void TestNN () {
-        var r = new Random ();
-
-        var data = new Tensor ((Matrix) new double[, ] { { 0, 0 }, { 0, 1 }, { 1, 0 }, { 1, 1 } }, true);
-        var target = new Tensor ((Matrix) new double[, ] { { 0 }, { 1 }, { 0 }, { 1 } }, true);
-
-        var weights = new List<Tensor> ();
-        weights.Add (new Tensor (Matrix.Random (2, 3, r), true));
-        weights.Add (new Tensor (Matrix.Random (3, 1, r), true));
-
-        for (var i = 0; i < 10; i++) {
-            var pred = Tensor.MatMul (Tensor.MatMul (data, weights[0]), weights[1]);
-
-            var diff = Tensor.Sub (pred, target);
-            var loss = Tensor.Sum (Tensor.Mul (diff, diff), AxisZero.vertical);
-
-            loss.Backward (new Tensor (Matrix.Ones (loss.Data.X, loss.Data.Y)));
-
-            foreach (var weight in weights) {
-                weight.Data -= (weight.Gradient.Data * 0.1f);
-                weight.Gradient.Data *= 0f;
-            }
-
-            Console.WriteLine ($"Epoch: {i} Loss: {loss}");
-        }
-    }
-
+class TestFile {
     static void TestExpand () {
         var data = new Tensor ((Matrix) new double[, ] { { 1 } });
         Console.WriteLine ($"Shape weight {Tensor.Expand(data, AxisZero.horizontal, 4).Data}");

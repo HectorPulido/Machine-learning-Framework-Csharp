@@ -16,13 +16,13 @@ namespace DLFramework {
         private List<object> arguments;
 
         public Matrix Data { get => data; set => data = value; }
-        public List<Tensor> Creators { get => creators; set => creators = value; }
-        public TensorOperations CreationOperation { get => creationOperation; set => creationOperation = value; }
+        public List<Tensor> Creators { get => creators; }
+        public TensorOperations CreationOperation { get => creationOperation; }
         public Tensor Gradient { get => gradient; set => gradient = value; }
-        public bool AutoGrad { get => autoGrad; set => autoGrad = value; }
-        public int Id { get => id; set => id = value; }
+        public bool AutoGrad { get => autoGrad; }
+        public int Id { get => id; }
         public Dictionary<int, int> Childrens { get => childrens; set => childrens = value; }
-        public List<object> Arguments { get => arguments; set => arguments = value; }
+        public List<object> Arguments { get => arguments; }
 
         public Tensor (Matrix data,
             bool autoGrad = false,
