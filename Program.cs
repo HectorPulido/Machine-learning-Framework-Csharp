@@ -33,15 +33,11 @@ class MainClass
 
             foreach (var weight in weights)
             {
-                Console.WriteLine($"Shape weight {weight.Data.Size}");
-                Console.WriteLine($"Shape weight gradient {weight.Gradient.Data.Size}");
-
-
                 weight.Data -= (weight.Gradient.Data * 0.1f);
                 weight.Gradient.Data *= 0f;
             }
 
-            Console.WriteLine($"Loss: {loss}");
+            Console.WriteLine($"Epoch: {i} Loss: {loss}");
         }
     }
 
