@@ -10,6 +10,7 @@ namespace DLFramework
         Transpose,
         MatrixMultiplication,
         Expand,
+        Other,
         None
     }
 }

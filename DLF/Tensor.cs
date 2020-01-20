@@ -14,6 +14,7 @@ namespace DLFramework {
         private bool autoGrad;
         private int id;
         private List<object> arguments;
+        private Action<Tensor, Tensor, List<Tensor>> backwardCallback;
 
         public Matrix Data { get => data; set => data = value; }
         public List<Tensor> Creators { get => creators; }
@@ -28,11 +29,13 @@ namespace DLFramework {
             bool autoGrad = false,
             List<Tensor> creators = null,
             TensorOperations creationOperation = TensorOperations.None,
-            List<object> arguments = null) {
+            List<object> arguments = null,
+            Action<Tensor, Tensor, List<Tensor>> backwardCallback = null) {
             this.data = data;
             this.autoGrad = autoGrad;
             this.gradient = null;
             this.arguments = arguments;
+            this.backwardCallback = backwardCallback;
 
             //Unique id
             id = idCount;
@@ -86,14 +89,10 @@ namespace DLFramework {
                 this.gradient = Tensor.Add (this.gradient, gradient);
             }
 
-            // if (data.X != gradient.data.X || data.Y != gradient.data.Y) {
-            //     Console.WriteLine ("=====================================");
-            //     Console.WriteLine ($"this id: {this.id}");
-            //     Console.WriteLine ($"Shape data: {this.data.Size}");
-            //     Console.WriteLine ($"Shape gradient: {this.gradient.data.Size}");
-            //     Console.WriteLine ($"Operation: {this.creationOperation}");
-            //     Console.WriteLine ("=====================================");
-            // }
+            // Console.WriteLine ("===============BACKPROP DATA======================");
+            // Console.WriteLine ($"this id: {this.id}");
+            // Console.WriteLine ($"Operation: {this.creationOperation}");
+            // Console.WriteLine ("==================================================");
 
             if (creators != null && (allChildrenGradsAccountedFor () || gradientOrigin == null)) {
                 switch (creationOperation) {
@@ -123,6 +122,9 @@ namespace DLFramework {
                         break;
                     case TensorOperations.Expand:
                         ExpandTensorOperation ();
+                        break;
+                    case TensorOperations.Other:
+                        backwardCallback (this, this.gradient, creators);
                         break;
                     default:
                         throw new ArgumentException ($"Invalid Creation operation: {creationOperation}");
