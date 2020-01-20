@@ -211,3 +211,33 @@ for (var i = 0; i < 300; i++) {
     Console.WriteLine ($"Epoch: {i} Loss: {loss}");
 }
 ```
+
+
+## More interesting projects
+I have a lot of fun projects, check this:
+
+### This project uses 
+- https://github.com/HectorPulido/Simple_Linear_Algebra
+
+### Machine learning
+- https://github.com/HectorPulido/Evolutionary-Neural-Networks-on-unity-for-bots
+- https://github.com/HectorPulido/Imitation-learning-in-unity
+- https://github.com/HectorPulido/Chatbot-seq2seq-C-
+
+### Games
+- https://github.com/HectorPulido/Unity-MMO-Framework
+- https://github.com/HectorPulido/Contra-Like-game-made-with-unity
+- https://github.com/HectorPulido/Pacman-Online-made-with-unity
+
+### Random
+- https://github.com/HectorPulido/Arithmetic-Parser-made-easy
+- https://github.com/HectorPulido/Simple-php-blog
+- https://github.com/HectorPulido/Decentralized-Twitter-with-blockchain-as-base
+
+### You also can follow me in social networks
+- Twitter: https://twitter.com/Hector_Pulido_
+- Youtube: http://youtube.com/c/hectorandrespulidopalmar
+- Twitch: https://www.twitch.tv/hector_pulido_
+
+## Licence
+This proyect was totally handcrafted by me, so the licence is MIT, use it as you want.
