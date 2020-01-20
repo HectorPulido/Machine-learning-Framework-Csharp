@@ -114,7 +114,7 @@ seq.Layers.Add (new SigmoidLayer ());
 #### MeanSquaredError
 A loss function is what we want to reduce in our problem, in this case (MSE) the function looks like this.
 
-<img src="https://latex.codecogs.com/gif.latex?mse&space;=&space;\sum&space;diff^{2}" title="mse = \sum diff^{2}" />
+<img src="https://latex.codecogs.com/gif.latex?mse&space;=&space;\sum&space;(prediction&space;-&space;target)^{2}" title="mse = \sum (prediction - target)^{2}" />
 
 You can use it like this:
 
