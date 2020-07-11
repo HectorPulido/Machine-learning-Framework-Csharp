@@ -279,7 +279,8 @@ namespace LinearAlgebra
         public static Matrix MatMult(Matrix m1, Matrix m2)
         {
             if (m1.Y != m2.X)
-                throw new ArgumentException("Matrix must have compatible dimensions");
+                throw new ArgumentException("Matrix must have compatible dimensions M1 Size " + m1.Size + 
+                " M2 Size: " + m2.Size);
             int n = m1.X;
             int m = m1.Y;
             int p = m2.Y;
@@ -301,7 +302,8 @@ namespace LinearAlgebra
         public static Matrix DeltaMult(Matrix m1, Matrix m2)
         {
             if (m1.X != m2.X || m1.Y != m2.Y)
-                throw new ArgumentException("Matrix must have the same dimensions");
+                throw new ArgumentException("Matrix must have the same dimensions M1 Size " + m1.Size + 
+                " M2 Size: " + m2.Size);
             double[,] output = new double[m1.X, m2.Y];
             MatrixLoop((i, j) =>
             {

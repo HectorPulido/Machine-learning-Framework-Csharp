@@ -19,6 +19,7 @@ namespace DLFramework
         private Action<Tensor, Tensor, List<Tensor>> backwardCallback;
 
         public Matrix Data { get => data; set => data = value; }
+
         public List<Tensor> Creators { get => creators; }
         public TensorOperations CreationOperation { get => creationOperation; }
         public Tensor Gradient { get => gradient; set => gradient = value; }
@@ -77,7 +78,7 @@ namespace DLFramework
             return true;
         }
 
-        public void Backward(Tensor gradient, Tensor gradientOrigin = null)
+        public void Backward(Tensor gradient = null, Tensor gradientOrigin = null)
         {
             if (!autoGrad)
             {
@@ -218,7 +219,10 @@ namespace DLFramework
             else
             {
                 shape = (int[])arguments[1];
-                copies = shape[0];
+                Creators[0].Backward(
+                    Tensor.Expand(gradient, dimension, shape[0], shape[1])
+                );
+                return;
             }
 
             Creators[0].Backward(Tensor.Expand(gradient, dimension, copies));
@@ -229,6 +233,7 @@ namespace DLFramework
         {
             // Grad_C0 = gradient x C1.T
             Creators[0].Backward(Tensor.MatMul(gradient, Tensor.Transp(Creators[1])));
+
             // Grad_C1 = (gradient.T x C0).T
             Creators[1].Backward(Tensor.Transp(Tensor.MatMul(Tensor.Transp(gradient), Creators[0])));
         }
@@ -279,7 +284,7 @@ namespace DLFramework
         }
 
         //==============OPERATIONS===================
-        public static Tensor Expand(Tensor A, AxisZero dim, int copies)
+        public static Tensor Expand(Tensor A, AxisZero dim, int copies, int copies2 = 0)
         {
             Matrix m = null;
             if (dim == AxisZero.horizontal)
@@ -298,13 +303,13 @@ namespace DLFramework
                     m[i, j] = A.data[0, j];
                 }, copies, A.data.Y);
             }
-            else
+            else if (dim == AxisZero.none)
             {
-                m = Matrix.Zeros(copies, copies);
+                m = Matrix.Zeros(copies, copies2);
                 Matrix.MatrixLoop((i, j) =>
                 {
                     m[i, j] = A.data[0, 0];
-                }, copies, copies);
+                }, copies, copies2);
             }
 
             if (A.AutoGrad)
@@ -327,13 +332,13 @@ namespace DLFramework
             if (A.AutoGrad)
             {
                 var Creators = new List<Tensor>() { A };
-                return new Tensor(A.data * -1.0f,
+                return new Tensor(A.data * -1,
                     true,
                     Creators,
                     TensorOperations.Negation);
             }
 
-            return new Tensor(A.data * -1.0f);
+            return new Tensor(A.data * -1);
         }
 
         public static Tensor Add(Tensor A, Tensor B)
