@@ -27,8 +27,9 @@ However <b>TAS</b> can me used without problem in text analisys problems, reinfo
 <b>TAS</b> Works with tensors, but tensors works with matrices, so to start using <b>TAS</b> you need to import Matrix class and Tensor class.
 
 ```csharp
-using DLFramework;
 using LinearAlgebra;
+using DLFramework;
+using DLFramework.Operations;
 ```
 
 to create a Tensor you need to do the following.
@@ -42,7 +43,7 @@ The first argument of the constructor is the Matrix that will be converted into 
 You can do math operations with the tensors like this:
 
 ```csharp
-var multiplication = Tensor.MatMul (data, weights);
+var multiplication = data.MatMul(weights);
 ```
 
 If the operands are marked as autograd the result of the operation will be autograd automatically. <br>
