@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using LinearAlgebra;
+using DLFramework.Operations;
 
 namespace DLFramework
 {
@@ -11,7 +12,6 @@ namespace DLFramework
         private Matrix data;
         private List<Tensor> creators;
         private Dictionary<int, int> childrens;
-        private TensorOperations creationOperation;
         private Tensor gradient;
         private bool autoGrad;
         private int id;
@@ -21,7 +21,6 @@ namespace DLFramework
         public Matrix Data { get => data; set => data = value; }
 
         public List<Tensor> Creators { get => creators; }
-        public TensorOperations CreationOperation { get => creationOperation; }
         public Tensor Gradient { get => gradient; set => gradient = value; }
         public bool AutoGrad { get => autoGrad; }
         public int Id { get => id; }
@@ -31,7 +30,6 @@ namespace DLFramework
         public Tensor(Matrix data,
             bool autoGrad = false,
             List<Tensor> creators = null,
-            TensorOperations creationOperation = TensorOperations.None,
             List<object> arguments = null,
             Action<Tensor, Tensor, List<Tensor>> backwardCallback = null)
         {
@@ -47,7 +45,6 @@ namespace DLFramework
 
             //Child and parents
             this.creators = creators;
-            this.creationOperation = creationOperation;
             childrens = new Dictionary<int, int>();
 
             if (this.creators != null)
@@ -106,7 +103,7 @@ namespace DLFramework
             }
             else
             {
-                this.gradient = Tensor.Add(this.gradient, gradient);
+                this.gradient = this.gradient.Add(gradient);
             }
 
             // Console.WriteLine ("===============BACKPROP DATA======================");
@@ -116,42 +113,8 @@ namespace DLFramework
 
             if (creators != null && (allChildrenGradsAccountedFor() || gradientOrigin == null))
             {
-                switch (creationOperation)
-                {
-                    case TensorOperations.None:
-                        //Do nothing
-                        break;
-                    case TensorOperations.Addition:
-                        AdditionTensorOperation();
-                        break;
-                    case TensorOperations.Negation:
-                        NegationTensorOperation();
-                        break;
-                    case TensorOperations.Substraction:
-                        SubstractionTensorOperation();
-                        break;
-                    case TensorOperations.Multiplication:
-                        MultiplicationTensorOperation();
-                        break;
-                    case TensorOperations.Sumatory:
-                        SumatoryTensorOperation();
-                        break;
-                    case TensorOperations.Transpose:
-                        TransposeTensorOperation();
-                        break;
-                    case TensorOperations.MatrixMultiplication:
-                        MatrixMultiplicationTensorOperation();
-                        break;
-                    case TensorOperations.Expand:
-                        ExpandTensorOperation();
-                        break;
-                    case TensorOperations.Other:
-                        backwardCallback(this, this.gradient, creators);
-                        break;
-                    default:
-                        throw new ArgumentException($"Invalid Creation operation: {creationOperation}");
-                }
-            }
+                backwardCallback(this, this.gradient, creators);
+             }
         }
 
         public override string ToString()
@@ -199,232 +162,6 @@ namespace DLFramework
             }
 
             return true;
-        }
-
-        private void SumatoryTensorOperation()
-        {
-            CheckCreatorsThrow(1);
-            var dimension = (AxisZero)arguments[0];
-            var shape = new int[] { };
-            var copies = 0;
-
-            if (dimension == AxisZero.horizontal)
-            {
-                copies = (int)Creators[0].data.Y;
-            }
-            else if (dimension == AxisZero.vertical)
-            {
-                copies = (int)Creators[0].data.X;
-            }
-            else
-            {
-                shape = (int[])arguments[1];
-                Creators[0].Backward(
-                    Tensor.Expand(gradient, dimension, shape[0], shape[1])
-                );
-                return;
-            }
-
-            Creators[0].Backward(Tensor.Expand(gradient, dimension, copies));
-
-        }
-
-        private void MatrixMultiplicationTensorOperation()
-        {
-            // Grad_C0 = gradient x C1.T
-            Creators[0].Backward(Tensor.MatMul(gradient, Tensor.Transp(Creators[1])));
-
-            // Grad_C1 = (gradient.T x C0).T
-            Creators[1].Backward(Tensor.Transp(Tensor.MatMul(Tensor.Transp(gradient), Creators[0])));
-        }
-
-        private void TransposeTensorOperation()
-        {
-            CheckCreatorsThrow(1);
-            Creators[0].Backward(Tensor.Transp(gradient));
-        }
-
-        private void MultiplicationTensorOperation()
-        {
-            CheckCreatorsThrow(2);
-            // Grad_C0 = gradient . C1
-            Creators[0].Backward(Tensor.Mul(gradient, Creators[1]), this);
-            // Grad_C1 = gradient . C0
-            Creators[1].Backward(Tensor.Mul(gradient, Creators[0]), this);
-        }
-
-        private void SubstractionTensorOperation()
-        {
-            CheckCreatorsThrow(2);
-            // Grad_C0 = gradient
-            Creators[0].Backward(gradient, this);
-            // Grad_C1 = -gradient
-            Creators[1].Backward(Tensor.Neg(gradient), this);
-        }
-
-        private void NegationTensorOperation()
-        {
-            CheckCreatorsThrow(1);
-            Creators[0].Backward(Tensor.Neg(gradient), this);
-        }
-
-        private void AdditionTensorOperation()
-        {
-            CheckCreatorsThrow(2);
-            Creators[0].Backward(gradient, this);
-            Creators[1].Backward(gradient, this);
-        }
-
-        private void ExpandTensorOperation()
-        {
-            CheckCreatorsThrow(1);
-            CheckArgumentsThrow(1);
-            var dimension = (AxisZero)arguments[0];
-            Creators[0].Backward(Tensor.Sum(gradient, dimension));
-        }
-
-        //==============OPERATIONS===================
-        public static Tensor Expand(Tensor A, AxisZero dim, int copies, int copies2 = 0)
-        {
-            Matrix m = null;
-            if (dim == AxisZero.horizontal)
-            {
-                m = Matrix.Zeros(A.data.X, copies);
-                Matrix.MatrixLoop((i, j) =>
-                {
-                    m[i, j] = A.data[i, 0];
-                }, A.data.X, copies);
-            }
-            else if (dim == AxisZero.vertical)
-            {
-                m = Matrix.Zeros(copies, A.data.Y);
-                Matrix.MatrixLoop((i, j) =>
-                {
-                    m[i, j] = A.data[0, j];
-                }, copies, A.data.Y);
-            }
-            else if (dim == AxisZero.none)
-            {
-                m = Matrix.Zeros(copies, copies2);
-                Matrix.MatrixLoop((i, j) =>
-                {
-                    m[i, j] = A.data[0, 0];
-                }, copies, copies2);
-            }
-
-            if (A.AutoGrad)
-            {
-                var Creators = new List<Tensor>() { A };
-                var Argument = new List<object>() { dim };
-                return new Tensor(m,
-                    true,
-                    Creators,
-                    TensorOperations.Expand,
-                    Argument
-                );
-            }
-
-            return new Tensor(m);
-        }
-
-        public static Tensor Neg(Tensor A)
-        {
-            if (A.AutoGrad)
-            {
-                var Creators = new List<Tensor>() { A };
-                return new Tensor(A.data * -1,
-                    true,
-                    Creators,
-                    TensorOperations.Negation);
-            }
-
-            return new Tensor(A.data * -1);
-        }
-
-        public static Tensor Add(Tensor A, Tensor B)
-        {
-            if (A.AutoGrad && B.AutoGrad)
-            {
-                var Creators = new List<Tensor>() { A, B };
-                return new Tensor(A.data + B.data,
-                    true,
-                    Creators,
-                    TensorOperations.Addition);
-            }
-
-            return new Tensor(A.data + B.data);
-        }
-
-        public static Tensor Sub(Tensor A, Tensor B)
-        {
-            if (A.AutoGrad && B.AutoGrad)
-            {
-                var Creators = new List<Tensor>() { A, B };
-                return new Tensor(A.data - B.data,
-                    true,
-                    Creators,
-                    TensorOperations.Substraction);
-            }
-
-            return new Tensor(A.data - B.data);
-        }
-
-        public static Tensor Mul(Tensor A, Tensor B)
-        {
-            if (A.AutoGrad && B.AutoGrad)
-            {
-                var Creators = new List<Tensor>() { A, B };
-                return new Tensor(Matrix.DeltaMult(A.data, B.data),
-                    true,
-                    Creators,
-                    TensorOperations.Multiplication);
-            }
-
-            return new Tensor(Matrix.DeltaMult(A.data, B.data));
-        }
-
-        public static Tensor Sum(Tensor A, AxisZero dim)
-        {
-            if (A.AutoGrad)
-            {
-                var Argument = new List<object>() { dim, new int[] { A.Data.X, A.Data.Y } };
-                var Creators = new List<Tensor>() { A };
-                return new Tensor(A.data.Sumatory(dim),
-                    true,
-                    Creators,
-                    TensorOperations.Sumatory,
-                    Argument);
-            }
-
-            return new Tensor(A.data.Sumatory(dim));
-        }
-
-        public static Tensor Transp(Tensor A)
-        {
-            if (A.AutoGrad)
-            {
-                var Creators = new List<Tensor>() { A };
-                return new Tensor(A.data.T,
-                    true,
-                    Creators,
-                    TensorOperations.Transpose);
-            }
-
-            return new Tensor(A.data.T);
-        }
-
-        public static Tensor MatMul(Tensor A, Tensor B)
-        {
-            if (A.AutoGrad && B.AutoGrad)
-            {
-                var Creators = new List<Tensor>() { A, B };
-                return new Tensor(Matrix.MatMult(A.data, B.data),
-                    true,
-                    Creators,
-                    TensorOperations.MatrixMultiplication);
-            }
-
-            return new Tensor(Matrix.MatMult(A.data, B.data));
         }
     }
 }

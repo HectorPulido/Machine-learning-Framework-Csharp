@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DLFramework;
 using DLFramework.Layers;
 using DLFramework.Layers.Activation;
+using DLFramework.Operations;
 using DLFramework.Layers.Loss;
 using DLFramework.Optimizers;
 using LinearAlgebra;
@@ -88,8 +89,8 @@ class MainClass {
         for (var i = 0; i < 10; i++) {
             var pred = seq.Forward (data);
 
-            var diff = Tensor.Sub (pred, target);
-            var loss = Tensor.Sum (Tensor.Mul (diff, diff), AxisZero.vertical);
+            var diff = pred.Sub(target);
+            var loss = diff.Mul(diff).Sum(AxisZero.vertical);
 
             loss.Backward (new Tensor (Matrix.Ones (loss.Data.X, loss.Data.Y)));
             sgd.Step ();
@@ -111,10 +112,10 @@ class MainClass {
         var sgd = new StochasticGradientDescent (weights, 0.1f);
 
         for (var i = 0; i < 10; i++) {
-            var pred = Tensor.MatMul (Tensor.MatMul (data, weights[0]), weights[1]);
+            var pred = data.MatMul(weights[0]).Add(weights[1]);
 
-            var diff = Tensor.Sub (pred, target);
-            var loss = Tensor.Sum (Tensor.Mul (diff, diff), AxisZero.vertical);
+            var diff = pred.Sub(target);
+            var loss = diff.Mul(diff).Sum(AxisZero.vertical);
 
             loss.Backward (new Tensor (Matrix.Ones (loss.Data.X, loss.Data.Y)));
             sgd.Step ();
@@ -134,11 +135,10 @@ class MainClass {
         weights.Add (new Tensor (Matrix.Random (3, 1, r), true));
 
         for (var i = 0; i < 10; i++) {
-            var pred = Tensor.MatMul (Tensor.MatMul (data, weights[0]), weights[1]);
+            var pred = data.MatMul(weights[0]).Add(weights[1]);
 
-            var diff = Tensor.Sub (pred, target);
-            var loss = Tensor.Sum (Tensor.Mul (diff, diff), AxisZero.vertical);
-
+            var diff = pred.Sub(target);
+            var loss = diff.Mul(diff).Sum(AxisZero.vertical);
             loss.Backward (new Tensor (Matrix.Ones (loss.Data.X, loss.Data.Y)));
 
             foreach (var weight in weights) {

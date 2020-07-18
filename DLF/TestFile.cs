@@ -1,12 +1,12 @@
 using System;
-using System.Collections.Generic;
 using DLFramework;
 using LinearAlgebra;
+using DLFramework.Operations;
 
 class TestFile {
     static void TestExpand () {
         var data = new Tensor ((Matrix) new double[, ] { { 1 } });
-        Console.WriteLine ($"Shape weight {Tensor.Expand(data, AxisZero.horizontal, 4).Data}");
+        Console.WriteLine ($"Shape weight {data.Exp(AxisZero.horizontal, 4).Data}");
     }
 
     static void Test1 () {
@@ -15,7 +15,7 @@ class TestFile {
         var x = new Tensor ((Matrix) new double[, ] { { 1, 2, 3, 4, 5 } }, true);
         var y = new Tensor ((Matrix) new double[, ] { { 1, 1, 1, 1, 1 } }, true);
 
-        var z = Tensor.Add (x, y);
+        var z = x.Add(y);
 
         //Sum
         Console.WriteLine ("Matrix a + 1, d");
@@ -33,8 +33,6 @@ class TestFile {
         foreach (var creator in z.Creators) {
             Console.WriteLine (creator.ToString ());
         }
-        Console.WriteLine ("Operation");
-        Console.WriteLine (z.CreationOperation);
 
         Console.WriteLine ("Grad x");
         Console.WriteLine (x.Gradient);
@@ -47,10 +45,10 @@ class TestFile {
         var b = new Tensor ((Matrix) new double[, ] { { 2, 2, 2, 2, 2 } }, true);
         var c = new Tensor ((Matrix) new double[, ] { { 5, 4, 3, 2, 1 } }, true);
 
-        var d = Tensor.Add (a, b);
-        var e = Tensor.Add (b, c);
+        var d = a.Add(b);
+        var e = b.Add(c);
 
-        var f = Tensor.Add (d, e);
+        var f = d.Add(e);
 
         f.Backward (new Tensor ((Matrix) new double[, ] { { 1, 1, 1, 1, 1 } }));
         Console.WriteLine ("Grad b");
@@ -61,10 +59,10 @@ class TestFile {
         var b2 = new Tensor ((Matrix) new double[, ] { { 2, 2, 2, 2, 2 } }, true);
         var c2 = new Tensor ((Matrix) new double[, ] { { 5, 4, 3, 2, 1 } }, true);
 
-        var d2 = Tensor.Add (a2, Tensor.Neg (b2));
-        var e2 = Tensor.Add (Tensor.Neg (b2), c2);
+        var d2 = a2.Add(b2.Neg());
+        var e2 = b2.Neg().Add(c2);
 
-        var f2 = Tensor.Add (d2, e2);
+        var f2 = d2.Add(e2);
         f2.Backward (new Tensor ((Matrix) new double[, ] { { 1, 1, 1, 1, 1 } }));
 
         Console.WriteLine ("Grad b2");

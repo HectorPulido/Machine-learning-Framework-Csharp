@@ -1,13 +1,12 @@
-using System;
-using System.Collections.Generic;
 using LinearAlgebra;
+using DLFramework.Operations;
 
 namespace DLFramework.Layers.Loss {
     public class MeanSquaredError : Layer {
         public Tensor Forward (Tensor prediction, Tensor target) {
-            var diff = Tensor.Sub (prediction, target);
-            var mult = Tensor.Mul (diff, diff);
-            return Tensor.Sum (mult, AxisZero.vertical);
+            var diff = prediction.Sub(target);
+            var mult = diff.Mul(diff);
+            return mult.Sum(AxisZero.vertical);
         }
     }
 }

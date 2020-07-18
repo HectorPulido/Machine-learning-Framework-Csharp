@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using LinearAlgebra;
+using DLFramework.Operations;
 
 namespace DLFramework.Layers.Activation {
 
@@ -18,7 +19,6 @@ namespace DLFramework.Layers.Activation {
                     data: output,
                     autoGrad: true,
                     creators: Creators,
-                    creationOperation: TensorOperations.Other,
                     arguments: null,
                     backwardCallback: Sigmoid.Backward);
             }
@@ -35,7 +35,7 @@ namespace DLFramework.Layers.Activation {
             }, self.Data.X, self.Data.Y);
 
             var derivatives = new Tensor (derivative); //Tensor.Mul (self, Tensor.Sub (ones, self));
-            creators[0].Backward (Tensor.Mul (gradient, derivatives));
+            creators[0].Backward (gradient.Mul(derivatives));
         }
     }
 

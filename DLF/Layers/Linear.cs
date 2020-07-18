@@ -1,7 +1,7 @@
 using System;
-using System.Collections.Generic;
 using LinearAlgebra;
 using DLFramework.Layers.Initialization;
+using DLFramework.Operations;
 
 namespace DLFramework.Layers
 {
@@ -24,9 +24,9 @@ namespace DLFramework.Layers
         public override Tensor Forward(Tensor input)
         {
             //out = (input x weights) + bias.expanded
-            var inputXWeights = Tensor.MatMul(input, parameters[0]);
-            var bias = Tensor.Expand(parameters[1], AxisZero.vertical, inputXWeights.Data.X);
-            return Tensor.Add(inputXWeights, bias);
+            var inputXWeights = input.MatMul(parameters[1]);
+            var bias = parameters[0].Exp(AxisZero.vertical, inputXWeights.Data.X);
+            return inputXWeights.Add(bias);
         }
     }
 }
